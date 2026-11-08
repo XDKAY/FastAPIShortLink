@@ -1,4 +1,4 @@
-__all__ = ("connect", "disconnect", "get_session")
+__all__ = ("database", )
 
 from typing import AsyncGenerator
 
@@ -12,19 +12,21 @@ from .base import Base
 from app.src.core.config.settings import settings
 
 
-EngineLocal = create_async_engine(settings.sqlite.url)
-SessionLocal = async_sessionmaker(EngineLocal)
+class DatabaseHandler:
+    def __init__(self, url: str) -> None:
+        self._engine = create_async_engine(url)
+        self._session = async_sessionmaker(self._engine)
+
+    async def connect(self) -> None:
+        async with self._engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    async def disconnect(self) -> None:
+        await self._engine.dispose()
+
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        async with self._session() as session:
+            yield session
 
 
-async def connect() -> None:
-    async with EngineLocal.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-
-async def disconnect() -> None:
-    await EngineLocal.dispose()
-
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with SessionLocal() as session:
-        yield session
+database = DatabaseHandler(settings.sqlite.url)

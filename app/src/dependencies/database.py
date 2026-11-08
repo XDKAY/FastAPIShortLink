@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.repositories.short_link import ShortLinkSQLRepository
 from app.src.core.services.short_link import ShortLinkService
-from app.src.db.database import get_session
+from app.src.db.database import database
 
 
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(database.get_session)]
 
 
 async def get_short_link_service(session: SessionDep) -> ShortLinkService:
